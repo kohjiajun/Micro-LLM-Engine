@@ -1,0 +1,71 @@
+# ==============================================================================
+# C / C++ Compilation & CMake
+# ==============================================================================
+# Compiled Object files & Static/Shared Libraries
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.pyd
+
+# CMake Build Directories & Cache
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Compiled Executables
+csrc/test_math
+*.out
+*.exe
+
+# ==============================================================================
+# Python & Virtual Environments
+# ==============================================================================
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Packaging, Wheels & PyBind11 / setuptools builds
+dist/
+*.egg-info/
+*.egg
+eggs/
+parts/
+bin/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ==============================================================================
+# IDEs & Developer Environment
+# ==============================================================================
+# macOS
+.DS_Store
+
+# VS Code & Tools
+.vscode/*
+!.vscode/settings.json
+!.vscode/c_cpp_properties.json
+!.vscode/launch.json
+
+# Local agent & LLM review scratchpads / logs
+*.log
+.agent/
