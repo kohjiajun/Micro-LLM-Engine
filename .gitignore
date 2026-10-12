@@ -68,4 +68,4 @@ htmlcov/
 
 # Local agent & LLM review scratchpads / logs
 *.log
-.agent/
+.agents/
