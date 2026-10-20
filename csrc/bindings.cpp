@@ -12,10 +12,17 @@ float py_fp32_dot_product(py::array_t<float> A, py::array_t<float> B){
         throw std::runtime_error("Input arrays must have matching lengths");
     }
 
-    return fp32_dot_product(
+    float result = 0.00f;
+
+    {
+        py::gil_scoped_release release;
+
+        result = fp32_dot_product(
         static_cast<const float*>(buf_A.ptr),
         static_cast<const float*>(buf_B.ptr),
         buf_A.size);
+    }
+    return result;
 
 }
 
@@ -26,11 +33,17 @@ py::tuple py_fp32_to_int8_quantization(py::array_t<float> input){
 
     auto q_out_array = py::array_t<int8_t>(size);
     py::buffer_info buf_q_out = q_out_array.request();
+    float scale = 0.00f;
 
-    float scale = fp32_to_int8_quantization(
+    {
+        py::gil_scoped_release release;
+
+        scale = fp32_to_int8_quantization(
         static_cast<const float*>(buf_input.ptr),
         static_cast<int8_t*>(buf_q_out.ptr),
         size);
+
+    }
 
     return py::make_tuple(scale,q_out_array);
 }
@@ -43,10 +56,15 @@ int32_t py_int8_dot_product(py::array_t<int8_t> A, py::array_t<int8_t> B){
         throw std::runtime_error("Input arrays must have matching lengths");
     }
 
-    return int8_dot_product(
+    int32_t result = 0;
+    {
+        py::gil_scoped_release release;
+        result = int8_dot_product(
         static_cast<const int8_t*>(buf_A.ptr),
         static_cast<const int8_t*>(buf_B.ptr),
         buf_A.size);
+    }
+    return result;
 }
 
 PYBIND11_MODULE(micro_llm_engine,m){
