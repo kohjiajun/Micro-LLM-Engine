@@ -1,6 +1,7 @@
 #include "engine.h"
 #include <stdint.h>
 #include <math.h>
+#include <omp.h>
 
 float fp32_dot_product(const float *A, const float *B, size_t size){
     float sum = 0;
@@ -36,4 +37,19 @@ int32_t int8_dot_product(const int8_t *A, const int8_t *B, size_t size){
         sum += A[i]*B[i];
     }
     return sum;
+}
+
+void fp32_gemm(const float *A, const float *B, float *res, size_t M, size_t N, size_t K){
+    #pragma omp parallel for
+    for (int64_t i = 0; i < M; i++){
+        for (size_t j = 0; j < N; j++) {
+        res[i * N + j] = 0.0f;
+        }
+        for(size_t k = 0; k < K; k++){
+            float a_ik = A[i * K + k]; //register hoist
+            for(size_t j = 0; j < N; j++){
+                res[i*N+j] += a_ik * B[k*N+j];
+            }
+        }
+    }
 }

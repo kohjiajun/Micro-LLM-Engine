@@ -4,6 +4,8 @@
 
 namespace py = pybind11;
 
+using FloatArray = py::array_t<float, py::array::c_style | py::array::forcecast>;
+
 float py_fp32_dot_product(py::array_t<float> A, py::array_t<float> B){
     py::buffer_info buf_A = A.request();
     py::buffer_info buf_B = B.request();
@@ -67,10 +69,46 @@ int32_t py_int8_dot_product(py::array_t<int8_t> A, py::array_t<int8_t> B){
     return result;
 }
 
+py::array_t<float> py_fp32_gemm(FloatArray A, FloatArray B){
+    py::buffer_info buf_A = A.request();
+    py::buffer_info buf_B = B.request();
+
+    if(buf_A.ndim != 2 || buf_B.ndim != 2){
+        throw std::runtime_error("Input Arrays must be 2D");
+    }
+    const size_t M = static_cast<size_t>(buf_A.shape[0]);
+    const size_t KA = static_cast<size_t>(buf_A.shape[1]);
+    const size_t KB = static_cast<size_t>(buf_B.shape[0]);
+    const size_t N = static_cast<size_t>(buf_B.shape[1]);
+
+    if(KA != KB){
+        throw std::runtime_error("COL A must be equal to ROW B");
+    }
+
+    py::array_t<float> result ({
+        static_cast<py::ssize_t>(M),
+        static_cast<py::ssize_t>(N)
+    });
+    float *res_ptr = result.mutable_data();
+    {
+        py::gil_scoped_release release;
+        fp32_gemm(
+            static_cast<const float*>(buf_A.ptr),
+            static_cast<const float*>(buf_B.ptr),
+            res_ptr,
+            M,
+            N,
+            KA
+        );
+    }
+    return result;
+}
+
 PYBIND11_MODULE(micro_llm_engine,m){
     m.doc() = "High-performance C++ math kernels for dot product and quantization";
 
     m.def("fp32_dot_product", &py_fp32_dot_product, "Computes float32 dot product of two array");
     m.def("fp32_to_int8_quantization",&py_fp32_to_int8_quantization,"Quantize float23 array to int8 array");
     m.def("int8_dot_product",&py_int8_dot_product,"Computes int8 dot product of two array, returns int32 sum");
+    m.def("fp32_gemm", &py_fp32_gemm,"Computes product of two matrixes");
 }
