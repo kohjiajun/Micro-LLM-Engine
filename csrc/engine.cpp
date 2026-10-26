@@ -62,3 +62,28 @@ void fp32_gemm(const float *A, const float *B, float *res, size_t M, size_t N, s
         }
     }
 }
+
+void int8_gemm(const int8_t *A, const int8_t *B, int32_t *res, size_t M, size_t N, size_t K){
+    #pragma omp parallel for
+    for(int64_t i = 0; i < M; i ++){
+        for(size_t j = 0 ; j < N; j++){
+            res[i*N+j] = 0;
+        }
+        for(size_t k = 0; k < K; k++){
+            int8_t a_ik = A[i*K+k];
+            __m256i a_vec = _mm256_set1_epi32(a_ik);
+            size_t j = 0;
+            for(; j+8 <= N; j += 8){
+                __m128i b_raw = _mm_loadu_si64(&B[k*N+j]); //only load 64bits (8x8 int8) because only 8(256/32) int32 values can be loaded from res
+                __m256i b_vec = _mm256_cvtepi8_epi32(b_raw);
+                __m256i res_vec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&res[i * N + j]));
+                __m256i prod = _mm256_mullo_epi32(a_vec,b_vec);
+                res_vec = _mm256_add_epi32(res_vec,prod);
+                _mm256_storeu_si256(reinterpret_cast<__m256i*>(&res[i * N + j]), res_vec);
+            }
+            for(; j < N; j ++){
+                res[i*N+j] += a_ik * B[k*N+j];
+            }
+        }
+    }
+}
