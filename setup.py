@@ -16,7 +16,8 @@ ext_modules = [
         extra_compile_args=[
             '/O2', #instruct compiler to perform highly optimized math
             '/std:c++17',
-            '/openmp'
+            '/openmp',
+            '/arch:AVX2'
         ],
     ),
 ]

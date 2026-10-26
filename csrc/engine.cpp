@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <omp.h>
+#include <immintrin.h>
 
 float fp32_dot_product(const float *A, const float *B, size_t size){
     float sum = 0;
@@ -47,8 +48,16 @@ void fp32_gemm(const float *A, const float *B, float *res, size_t M, size_t N, s
         }
         for(size_t k = 0; k < K; k++){
             float a_ik = A[i * K + k]; //register hoist
-            for(size_t j = 0; j < N; j++){
-                res[i*N+j] += a_ik * B[k*N+j];
+            __m256 a_vec = _mm256_set1_ps(a_ik);
+            size_t j = 0;
+            for(; j + 8 <= N; j += 8){
+                __m256 b_vec = _mm256_loadu_ps(&B[k * N + j]);
+                __m256 res_vec = _mm256_loadu_ps(&res[i * N +j]);
+                res_vec = _mm256_fmadd_ps(a_vec,b_vec,res_vec);
+                _mm256_storeu_ps(&res[i*N+j],res_vec);
+            }
+            for(; j < N; j++){
+                res[i*N+j] += a_ik * B[k * N + j];
             }
         }
     }
